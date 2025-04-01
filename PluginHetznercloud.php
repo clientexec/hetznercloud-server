@@ -5,7 +5,7 @@ require_once 'Hetznercloud.class.php';
 class PluginHetznercloud extends ServerPlugin
 {
     public $features = [
-        'packageName' => true,
+        'packageName' => false,
         'testConnection' => true,
         'showNameservers' => false,
         'directlink' => true
@@ -128,18 +128,23 @@ class PluginHetznercloud extends ServerPlugin
     }
 
 
-    public function getPlans()
+    public function getPlans($serverId)
     {
+        $server = new Server($serverId);
+        $pluginVariables = $server->getAllServerPluginVariables($this->user, 'hetznercloud');
+
+        $args = [];
+        $args['server']['variables'] = $pluginVariables;
+        $this->setup($args);
+
         $plans = [];
-        $dir = dirname(__FILE__).DIRECTORY_SEPARATOR.'json';
-        $hideName = array('.','..','.DS_Store');
         $plans[0] = lang('-- Select VPS Plan --');
-        if (file_exists($dir.'/plans.json')) {
-            $ServerTypeGetAll = json_decode(file_get_contents($dir.'/plans.json'), true);
-            foreach ($ServerTypeGetAll['server_types'] as $ServerTypeAll) {
-                $plans[$ServerTypeAll['name']] = $ServerTypeAll['description'].'( '.$ServerTypeAll['cores'].' vCPU, '.$ServerTypeAll['memory'].' GB RAM, '.$ServerTypeAll['disk'].' GB HDD)';
-            }
+        $serverTypes = $this->api->getAllPlans()['server_types'];
+
+        foreach ($serverTypes as $type) {
+            $plans[$type['name']] = $type['description'] . ' (' . $type['cores'] . ' vCPU, ' . $type['memory'] . ' GB RAM, ' . $type['disk'] . ' GB HDD)';
         }
+
         return $plans;
     }
 
@@ -150,7 +155,6 @@ class PluginHetznercloud extends ServerPlugin
     public function doUpdate($args)
     {
     }
-
 
     public function doDelete($args)
     {
@@ -430,7 +434,7 @@ class PluginHetznercloud extends ServerPlugin
         $args = $this->buildParams($userPackage);
         $this->setup($args);
         $VnConsole = $this->api->ServerRequestConsole($args['package']['ServerAcctProperties']);
-        $b64Data = base64_encode('host=' .$VnConsole["wss_url"].'_&_password='.$VnConsole["password"]);
+        $b64Data = base64_encode('host=' . $VnConsole["wss_url"] . '_&_password=' . $VnConsole["password"]);
 
         if ($fromAdmin) {
             return [
@@ -442,11 +446,11 @@ class PluginHetznercloud extends ServerPlugin
             return array(
                 'fa' => 'fa fa-user fa-fw',
                 'link' => $url,
-                'rawlink' => $linkText,
+                'text' => $linkText,
                 'form' => ''
             );
         } else {
-            $link = 'plugins/server/hetznercloud/console.php?tokens='.$b64Data;
+            $link = 'plugins/server/hetznercloud/console.php?tokens=' . $b64Data;
 
             return [
                 'fa' => 'fa fa-user fa-fw',
@@ -461,6 +465,6 @@ class PluginHetznercloud extends ServerPlugin
     {
         $userPackage = new UserPackage($args['userPackageId']);
         $response = $this->getDirectLink($userPackage);
-        return $response['rawlink'];
+        return $response['link'];
     }
 }

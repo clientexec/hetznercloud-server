@@ -39,6 +39,7 @@ class Hetznercloud
         $this->setCurlOption(CURLOPT_HTTPGET, true);
         $this->setCurlOption(CURLOPT_CUSTOMREQUEST, 'GET');
 
+        CE_Lib::log(4, 'Request to: ' . $this->baseUrl . '/' . $url);
         return $this->executeRequest();
     }
 
@@ -84,7 +85,6 @@ class Hetznercloud
         curl_setopt_array($this->curl, $this->curlOptions);
         $response = curl_exec($this->curl);
         return json_decode($response, true);
-        CE_Lib::log(4, 'Hetzner Cloud Response: ' . $response);
     }
 
     //List all Actions -
@@ -490,7 +490,20 @@ class Hetznercloud
     //Get all Images
     public function ImagesGetAll()
     {
-        return $this->get('images');
+        $request = $this->get('images');
+        $data = $request;
+        if ($request['meta']['pagination']['next_page'] > 1) {
+            while (true) {
+                $request = $this->get('images?page=' . $request['meta']['pagination']['next_page']);
+                foreach ($request['images'] as $image) {
+                    $data['images'][] = $image;
+                }
+                if ($request['meta']['pagination']['next_page'] == '') {
+                    break;
+                }
+            }
+        }
+        return $data;
     }
 
     //Get Images types
@@ -1061,5 +1074,10 @@ class Hetznercloud
     {
         $data['network'] = $networkId;
         return $this->post('servers/' . $serverId . '/actions/attach_to_network', $data);
+    }
+
+    public function getAllPlans()
+    {
+        return $this->get('server_types');
     }
 }
