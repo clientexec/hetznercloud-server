@@ -274,6 +274,11 @@ class PluginHetznercloud extends ServerPlugin
         }
 
         $serverId = $this->api->CreateVM($options);
+        if (empty($serverId['server']['id'])) {
+            $error = $serverId['error']['message'] ?? 'Unknown error creating server.';
+            throw new CE_Exception('Hetznercloud CreateVM failed: ' . $error);
+        }
+
         if ($serverId['server']['id']) {
             $userPackage->setCustomField('Server Acct Properties', $serverId['server']['id']);
             $foundIp = false;
@@ -303,7 +308,7 @@ class PluginHetznercloud extends ServerPlugin
         $osname = $userPackage->getCustomField($args['server']['variables']['plugin_hetznercloud_VM_Operating_System_Custom_Field'], CUSTOM_FIELDS_FOR_PACKAGE);
         $Data = $this->api->ServerRebuild($args['package']['ServerAcctProperties'], $osname);
         if ($Data['root_password']) {
-            $userPackage->setCustomField($args['server']['variables']['plugin_linode_VM_Password_Custom_Field'], $Data['root_password'], CUSTOM_FIELDS_FOR_PACKAGE);
+            $userPackage->setCustomField($args['server']['variables']['plugin_hetznercloud_VM_Password_Custom_Field'], $Data['root_password'], CUSTOM_FIELDS_FOR_PACKAGE);
         }
         return $vmHostname . ' has been reinstalled.';
     }
