@@ -113,7 +113,7 @@ class Hetznercloud
 
     public function countElements()
     {
-        return $this->get('servers') ['meta']['pagination']['total_entries'];
+        return $this->get('servers')['meta']['pagination']['total_entries'];
     }
 
     //Get a Server -
@@ -153,7 +153,7 @@ class Hetznercloud
                 //'ssh_keys' => array(1065567), //working
                 'ssh_keys' => array(
                     $SSHKey['ssh_key']['id']
-                ) ,
+                ),
                 'user_data' => $user_data,
                 'start_after_create' => true,
                 'automount' => false,
@@ -361,7 +361,7 @@ class Hetznercloud
     //Create a Floating IP
     public function FloatingIPCreate($id, $type)
     {
-        return $this->post('floating_ips', ['type' => $type, 'server' => $id, ]);
+        return $this->post('floating_ips', ['type' => $type, 'server' => $id,]);
     }
 
     //Update a Floating IP
@@ -603,7 +603,7 @@ class Hetznercloud
     //Create a Volume
     public function CreateVolume($size, $name, $server, $automount, $format)
     {
-        return $this->post('volumes', ['size' => $size, 'name' => $name, 'automount' => $automount, 'server' => $server, 'format' => $format, ]);
+        return $this->post('volumes', ['size' => $size, 'name' => $name, 'automount' => $automount, 'server' => $server, 'format' => $format,]);
     }
 
     //Update a Volume
@@ -1078,6 +1078,6 @@ class Hetznercloud
 
     public function getAllPlans()
     {
-        return $this->get('server_types');
+        return $this->get('server_types?per_page=100');
     }
 }
